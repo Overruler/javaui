@@ -1,5 +1,6 @@
 reports/
 build/
+bin/
 *.class
 
 # Package Files #

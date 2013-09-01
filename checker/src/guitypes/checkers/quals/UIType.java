@@ -1,20 +1,26 @@
 package guitypes.checkers.quals;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import checkers.quals.*;
+import checkers.quals.SubtypeOf;
 
 /**
  * Class declaration annotation to make methods default to @UI
  *
- * Do NOT mark this @TypeQualifier.  It is not necessary to get access to it,
- * and doing so directs the checker framework to add all sorts of extra weird
- * semantics to its use.
+ * Do NOT mark this @TypeQualifier. It is not necessary to get access
+ * to it, and doing so directs the checker framework to add all sorts
+ * of extra weird semantics to its use.
  */
 @Documented
-@Retention(RetentionPolicy.RUNTIME) // likely unnecessary
+// likely unnecessary
+@Retention(RetentionPolicy.RUNTIME)
 @Target({
-        ElementType.TYPE
-        })
-@SubtypeOf({}) // Need to specify this so the annotated type mirror framework will not choke on this
+    ElementType.TYPE
+})
+// Need to specify this so the annotated type mirror framework will not choke on this
+@SubtypeOf({})
 public @interface UIType {}
