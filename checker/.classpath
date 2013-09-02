@@ -2,6 +2,15 @@
 <classpath>
 	<classpathentry kind="src" path="jdk8-src"/>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="tests/src"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/extra"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/failing"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/packagespanning"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/tests"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/tests2"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/tests3"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/tests4"/>
+	<classpathentry kind="src" output="bin-tests" path="tests/ui/unimplemented"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="checkers-new/checker-framework-1.6.7/binary/checkers.jar" sourcepath="checkers-new/checker-framework-1.6.7/src">
 		<attributes>
