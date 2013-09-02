@@ -8,7 +8,6 @@
   <property name="build.tests" location="tests/build" />
   <property name="build.reports" location="reports" />
   <property name="dist" location="dist" />
-  <property name="jsr308" location="binary" />
   <property name="tests" value="tests" />
   <property name="tests.junit" value="${tests}/junit-4.7.jar" />
   <property name="run.tests.should.fork" value="true" />
@@ -28,14 +27,14 @@
   </condition>
 
   <presetdef name="jsr308.javac">
-    <javac fork="yes" debug="true" debuglevel="lines,vars,source">
+    <javac fork="yes"
+           executable="${checkers}/binary/${cfJavac}"
+           includeantruntime="false">
+      <!-- JSR-308-related compiler arguments -->
       <compilerarg value="-version" />
-      <compilerarg value="-J-Xbootclasspath/p:${jsr308}/jsr308-all.jar" />
-      <compilerarg value="-Xbootclasspath/p:${jsr308}/jdk.jar" />
       <compilerarg value="-g" />
-      <classpath>
-        <pathelement location="${jsr308}/jdk.jar" />
-      </classpath>
+      <!-- optional, so .class files work with older JVMs: <compilerarg line="-target 5"/> -->
+      <compilerarg value="-implicit:class" />
     </javac>
   </presetdef>
 
@@ -59,16 +58,17 @@
     <tstamp />
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}" />
-    <mkdir dir="${build.tests}" />
   </target>
 
   <target name="compile" depends="init" description="compile the source ">
     <!-- Compile the java code from ${src} into ${build} -->
     <jsr308.javac srcdir="${src}" destdir="${build}" />
     <copy file="${src}/guitypes/checkers/messages.properties"
-          todir="${build}/guitypes/checkers/" />
+          todir="${build}/guitypes/checkers/"
+          preservelastmodified="true" />
     <copy file="${src}/guitypes/checkers/jdk.astub"
-          todir="${build}/guitypes/checkers/" />
+          todir="${build}/guitypes/checkers/"
+          preservelastmodified="true" />
   </target>
 
   <target name="dist" depends="compile" description="generate the distribution">
@@ -77,39 +77,37 @@
 
     <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
     <jar jarfile="${dist}/lib/guitypes-${DSTAMP}.jar" basedir="${build}" />
+
+    <copy file="${dist}/lib/guitypes-${DSTAMP}.jar"
+          tofile="${dist}/lib/guitypes-latest.jar">
+    </copy>
   </target>
 
   <target name="clean" description="clean up">
     <!-- Delete the ${build} and ${dist} directory trees -->
     <delete dir="${build}" />
     <delete dir="${build.tests}" />
+    <delete dir="${build.reports}" />
     <delete dir="${dist}" />
   </target>
 
   <target name="build-tests" depends="dist" description="Compile tests">
+    <mkdir dir="${build.tests}" />
+
     <pathconvert pathsep=" " property="src.tests">
       <path>
-        <fileset dir="${tests}">
-          <!-- Ultimately this next line should grab the test drivers, rather than the
-                       test  program. -->
+        <fileset dir="${tests}/src">
           <include name="ui/testdrivers/*.java" />
-          <!-- This shouldn't be necessary, but I'm working around some classpath / build
-                  order issues -->
-          <include name="ui/tests/*.java" />
-          <include name="ui/tests/packagetests/*.java" />
+          <exclude name="ui/testdrivers/ManualTestRunnerForIDE.java" />
         </fileset>
       </path>
     </pathconvert>
-    <java fork="true"
-          failonerror="true"
-          classpath="${jsr308}/jsr308-all.jar:${jsr308}/jdk.jar:${tests.junit}:${dist}/lib/guitypes-${DSTAMP}.jar"
-          classname="com.sun.tools.javac.Main">
-      <jvmarg line="-Xbootclasspath/p:${jsr308}/jsr308-all.jar" />
-      <arg value="-g" />
-      <arg line="-sourcepath ${tests}" />
-      <arg line="-d ${build.tests}" />
-      <arg line="${src.tests}" />
-    </java>
+    <jsr308.javac srcdir="${tests}/src"
+                  destdir="${build.tests}"
+                  classpath="${tests.junit}:${dist}/lib/guitypes-${DSTAMP}.jar">
+      <include name="ui/testdrivers/*.java" />
+      <exclude name="ui/testdrivers/UITests.java" />
+    </jsr308.javac>
   </target>
 
   <!-- Per the <test> element, output goes to ${build.reports} -->
@@ -119,18 +117,15 @@
            dir="${basedir}"
            printsummary="true"
            haltonfailure="${halt.on.test.failure}">
-      <!--jvmarg line="-Xbootclasspath/p:${jsr308}/jdk.jar:${jsr308}/jsr308-all.jar"/-->
-      <jvmarg line="-Xbootclasspath/p:${tests.junit}:${jsr308}/jsr308-all.jar" />
+      <jvmarg line="-Xbootclasspath/p:${javac.lib}" />
       <jvmarg line="-ea" />
 
       <classpath>
-        <pathelement path="${jsr308}/jsr308-all.jar" />
-        <pathelement path="${jsr308}/jdk.jar" />
+        <pathelement path="${javac.lib}" />
+        <pathelement path="${checkers.lib}" />
         <pathelement path="${dist}/lib/guitypes-${DSTAMP}.jar" />
         <pathelement path="${build.tests}" />
-        <!--pathelement path="${build.tests}/testclasses"/-->
         <pathelement path="${tests.junit}" />
-        <pathelement path="${build}" />
       </classpath>
       <formatter type="xml" />
       <formatter type="brief" usefile="false" />
@@ -140,45 +135,9 @@
   </target>
 
   <target name="test"
-          depends="dist,build-tests"
+          depends="test-of-testing,package-spanning-test,
+    tests1,tests2,tests3,tests4"
           description="Run tests for all checkers">
-
-    <!-- Copied from -run-tests target -->
-    <mkdir dir="${build.reports}" />
-    <junit fork="${run.tests.should.fork}"
-           dir="${basedir}"
-           printsummary="true"
-           haltonfailure="${halt.on.test.failure}">
-      <!--jvmarg line="-Xbootclasspath/p:${jsr308}/jdk.jar:${jsr308}/jsr308-all.jar"/-->
-      <!--jvmarg line="-Xbootclasspath/p:${jsr308}/jsr308-all.jar"/-->
-      <jvmarg line="-Xbootclasspath/p:${tests.junit}:${jsr308}/jsr308-all.jar" />
-      <jvmarg line="-ea" />
-
-      <classpath>
-        <pathelement path="${jsr308}/jsr308-all.jar" />
-        <pathelement path="${jsr308}/jdk.jar" />
-        <pathelement path="${dist}/lib/guitypes-${DSTAMP}.jar" />
-        <pathelement path="${build.tests}" />
-        <!--pathelement path="${build.tests}/testclasses"/-->
-        <pathelement path="${tests.junit}" />
-        <pathelement path="${build}" />
-      </classpath>
-      <formatter type="xml" />
-      <formatter type="brief" usefile="false" />
-
-      <batchtest todir="${build.reports}">
-        <fileset dir="${tests}">
-          <include name="ui/testdrivers/UITestDriver.java" />
-          <!--include name="**/*.java"/-->
-          <!--exclude name="**/*.java"/-->
-
-          <!-- Framework classes -->
-          <!--exclude name="**/CheckerTest.java"/>
-                  <exclude name="**/ParameterizedCheckerTest.java"/-->
-          <!--exclude name="testdrivers/*.java"/-->
-        </fileset>
-      </batchtest>
-    </junit>
   </target>
 
   <target name="test-of-testing" depends="dist,build-tests">
