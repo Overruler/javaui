@@ -11,6 +11,7 @@ import guitypes.checkers.quals.UIEffect;
 import guitypes.checkers.quals.UIPackage;
 import guitypes.checkers.quals.UIType;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -26,6 +27,7 @@ import javax.lang.model.type.TypeMirror;
 import checkers.basetype.BaseTypeChecker;
 import checkers.source.Result;
 import checkers.types.AnnotatedTypeMirror;
+import checkers.types.AnnotatedTypeMirror.AnnotatedDeclaredType;
 import checkers.types.BasicAnnotatedTypeFactory;
 import checkers.types.TreeAnnotator;
 import checkers.util.AnnotationUtils;
@@ -145,11 +147,14 @@ public class GUIEffectsTypeFactory
         if(debugSpew) {
             System.err.println(" isUIType(" + cls + ")");
         }
-        AnnotationMirror targetClassUIP = getDeclAnnotation(cls, UI.class);
+        // Checking type-use in addition to declaration annotations
+        // to find something for anonymous inner classes
+        AnnotationMirror targetClassUIP =
+            getDeclOrUseAnnotation(cls, UI.class);
         AnnotationMirror targetClassUITypeP =
-            getDeclAnnotation(cls, UIType.class);
+            getDeclOrUseAnnotation(cls, UIType.class);
         AnnotationMirror targetClassSafeTypeP =
-            getDeclAnnotation(cls, SafeType.class);
+            getDeclOrUseAnnotation(cls, SafeType.class);
 
         if(targetClassSafeTypeP != null) {
             if(debugSpew) {
@@ -217,6 +222,21 @@ public class GUIEffectsTypeFactory
         }
 
         return false;
+    }
+
+    /*
+     * Prefers declaration annotations over type use to remain compatible
+     * with getDeclAnnotation() as much as possible.
+     */
+    private AnnotationMirror getDeclOrUseAnnotation(TypeElement cls,
+            Class<? extends Annotation> anno) {
+        AnnotationMirror declAnnotation = getDeclAnnotation(cls, anno);
+        if(declAnnotation != null) {
+            return declAnnotation;
+        }
+        AnnotatedDeclaredType annotatedType = getAnnotatedType(cls);
+        declAnnotation = annotatedType.getAnnotation(anno);
+        return declAnnotation;
     }
 
     /*
@@ -352,13 +372,15 @@ public class GUIEffectsTypeFactory
         ExecutableElement safe_override = null;
         ExecutableElement poly_override = null;
         // We must account for explicit annotation, type declaration annotations, and package annotations
+        boolean isSafeUI =
+            getDeclAnnotation(overridingMethod, SafeEffect.class) != null;
         boolean isUI =
             (getDeclAnnotation(overridingMethod, UIEffect.class) != null || isUIType(declaringType))
                 //getDeclAnnotation(declaringType, UIType.class) != null ||
                 //getDeclAnnotation(declaringType, UI.class) != null ||
                 //(getDeclAnnotation(ElementUtils.enclosingPackage(declaringType), UIPackage.class) != null
                 // && !isAnonymousType(ElementUtils.getType(declaringType))))
-                && getDeclAnnotation(overridingMethod, SafeEffect.class) == null;
+                && !isSafeUI;
         boolean isPolyUI =
             getDeclAnnotation(overridingMethod, PolyUIEffect.class) != null;
         // TODO: We must account for @UI and @AlwaysSafe annotations for extends and implements clauses, and do the proper
@@ -473,15 +495,15 @@ public class GUIEffectsTypeFactory
         }
 
         Effect min =
-            safe_override != null ? new Effect(SafeEffect.class)
-                : poly_override != null ? new Effect(PolyUIEffect.class)
-                    : ui_override != null ? new Effect(UIEffect.class)
-                        : null;
+            safe_override != null || isSafeUI ? new Effect(
+                SafeEffect.class) : poly_override != null || isPolyUI
+                ? new Effect(PolyUIEffect.class) : ui_override != null
+                    || isUI ? new Effect(UIEffect.class) : null;
         Effect max =
-            ui_override != null ? new Effect(UIEffect.class)
-                : poly_override != null ? new Effect(PolyUIEffect.class)
-                    : safe_override != null ? new Effect(SafeEffect.class)
-                        : null;
+            ui_override != null || isUI ? new Effect(UIEffect.class)
+                : poly_override != null || isPolyUI ? new Effect(
+                    PolyUIEffect.class) : safe_override != null
+                    || isSafeUI ? new Effect(SafeEffect.class) : null;
         if(debugSpew) {
             System.err.println("Found " + declaringType + "."
                 + overridingMethod + " to have inheritance pair (" + min
@@ -570,8 +592,7 @@ public class GUIEffectsTypeFactory
                 }
                 receiver.clearAnnotations();
                 receiver.addAnnotation(isPolymorphicType(cls)
-                    ? PolyUI.class
-                    : getDeclAnnotation(cls, UI.class) != null ? UI.class
+                    ? PolyUI.class : isUIType(cls) ? UI.class
                         : AlwaysSafe.class);
                 if(debugSpew) {
                     System.err

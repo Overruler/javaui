@@ -17,6 +17,7 @@ import javax.lang.model.type.TypeMirror;
 import checkers.basetype.BaseTypeVisitor;
 import checkers.source.Result;
 import checkers.types.AnnotatedTypeMirror;
+import checkers.types.AnnotatedTypeMirror.AnnotatedDeclaredType;
 import checkers.types.AnnotatedTypeMirror.AnnotatedExecutableType;
 import checkers.util.TreeUtils;
 
@@ -26,7 +27,12 @@ import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.ModifiersTree;
+import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.Tree;
+import com.sun.source.tree.Tree.Kind;
+
+/*>>> import checkers.compilermsgs.quals.CompilerMessageKey;*/
 
 /**
  * Require that only UI code invokes code with the UI effect.
@@ -212,11 +218,11 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
         @SuppressWarnings("unused") TypeMirror scratch =
             methElt.getReturnType();
         AnnotationMirror targetUIP =
-            atypeFactory.getDeclAnnotation(methElt, UIEffect.class);
+            getypeFactory.getDeclAnnotation(methElt, UIEffect.class);
         AnnotationMirror targetSafeP =
-            atypeFactory.getDeclAnnotation(methElt, SafeEffect.class);
+            getypeFactory.getDeclAnnotation(methElt, SafeEffect.class);
         AnnotationMirror targetPolyP =
-            atypeFactory.getDeclAnnotation(methElt, PolyUIEffect.class);
+            getypeFactory.getDeclAnnotation(methElt, PolyUIEffect.class);
         TypeElement targetClassElt =
             (TypeElement) methElt.getEnclosingElement();
         if(targetUIP != null
@@ -316,6 +322,46 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
         currentMethods.pop();
         effStack.pop();
         return ret;
+    }
+
+    /**
+     * Specialized check for assignment of class new expression which
+     * includes class body. Checks annotations from class body
+     * expression or forwards to superclass implementation if there is
+     * none.
+     * 
+     * @param varType
+     *            type of the target variable.
+     * @param valueExp
+     *            expression of the source value.
+     * @param errorKey
+     *            error message key shown in diagnostics.
+     */
+    @Override protected void
+            commonAssignmentCheck(AnnotatedTypeMirror varType,
+                    ExpressionTree valueExp, /*@CompilerMessageKey*/
+                    String errorKey) {
+        if(valueExp == null || valueExp.getKind() != Kind.NEW_CLASS) {
+            super.commonAssignmentCheck(varType, valueExp, errorKey);
+            return;
+        }
+        NewClassTree tree2 = (NewClassTree) valueExp;
+        ClassTree classBody = tree2.getClassBody();
+        if(classBody != null) {
+            ModifiersTree modifiers = classBody.getModifiers();
+            if(modifiers.getAnnotations().size() == 0) {
+                super.commonAssignmentCheck(varType, valueExp, errorKey);
+            } else {
+                AnnotatedDeclaredType valueType =
+                    getypeFactory.fromClass(classBody);
+                commonAssignmentCheck(varType, valueType, valueExp,
+                    errorKey);
+            }
+
+        } else {
+            super.commonAssignmentCheck(varType, valueExp, errorKey);
+        }
+
     }
 
     void out(String text, Object node) {
