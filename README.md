@@ -1,3 +1,25 @@
+A Fork of GUI Effects Checker
+===========================
+This fork fixes the compile-time errors in GUI Effects Checker when building 
+against Checker Framework 1.6.7. It also includes changes to build script and 
+test support classes needed to get all tests to succeed.
+
+Installation
+------------
+The code is intended to be used with Eclipse 4.3 (Kepler) with FindBugs 
+plugin but may work in other configurations too. After importing the project 
+to your workspace, run the Ant task "setup-Checker-Framework", which downloads 
+and unzips Checker Framework to fix build path errors.
+
+License
+-------
+Changes licensed under BSD and/or MIT and/or the original CRAPL license(s). 
+Original work licensed under CRAPL, provided in CRAPL-LICENSE.txt.
+
+Original README.md
+------------------
+See below.
+
 GUI Effects Checker
 ===================
 This repository contains a prototype implementation of a Java effect system to ensure the absence
