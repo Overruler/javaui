@@ -32,7 +32,8 @@ import com.sun.source.tree.Tree;
  * Require that only UI code invokes code with the UI effect.
  */
 public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
-
+    // To count hits for debugger breakpoints.
+    public static int hitCounter = 0;
     protected final boolean debugSpew;
 
     // effStack and currentMethods should always be the same size.
@@ -48,8 +49,8 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
         if(debugSpew) {
             System.err.println("Running GUIEffectsVisitor");
         }
-        effStack = new Stack<Effect>();
-        currentMethods = new Stack<MethodTree>();
+        effStack = new Stack<>();
+        currentMethods = new Stack<>();
         getypeFactory = (GUIEffectsTypeFactory) atypeFactory;
     }
 
@@ -112,14 +113,14 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
     @Override public Void visitMethodInvocation(MethodInvocationTree node,
             Void p) {
         if(debugSpew) {
-            System.err.println("For invocation " + node + " in "
-                + currentMethods.peek().getName());
+            String text =
+                "**** Visit invocation of method " + node + " in "
+                    + currentMethods.peek().getName();
+            System.err.println(text);
+            out(text, node);
         }
         // Target method annotations
         ExecutableElement methodElt = TreeUtils.elementFromUse(node);
-        if(debugSpew) {
-            System.err.println("methodElt found");
-        }
 
         MethodTree callerTree =
             TreeUtils.enclosingMethod(getCurrentPath());
@@ -131,14 +132,12 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
             }
             return super.visitMethodInvocation(node, p);
         }
-        if(debugSpew) {
-            System.err.println("callerTree found");
-        }
 
         ExecutableElement callerElt =
             TreeUtils.elementFromDeclaration(callerTree);
         if(debugSpew) {
-            System.err.println("callerElt found");
+            System.err.println("caller found, tree: " + callerTree
+                + ", element: " + callerElt);
         }
 
         Effect targetEffect = getypeFactory.getDeclaredEffect(methodElt);
@@ -175,12 +174,16 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
             checker.report(Result.failure("call.invalid.ui", targetEffect,
                 callerEffect), node);
             if(debugSpew) {
-                System.err.println("Issuing error for node: " + node);
+                out("Issuing error for node", node);
+            }
+        } else {
+            if(debugSpew) {
+                out("Not Issuing error for node", node);
             }
         }
         if(debugSpew) {
             System.err
-                .println("Successfully finished main non-recursive checkinv of invocation "
+                .println("Successfully finished main non-recursive checking of invocation "
                     + node);
         }
 
@@ -206,7 +209,8 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
 
         // Check for conflicting (multiple) annotations
         assert methElt != null;
-        TypeMirror scratch = methElt.getReturnType();
+        @SuppressWarnings("unused") TypeMirror scratch =
+            methElt.getReturnType();
         AnnotationMirror targetUIP =
             atypeFactory.getDeclAnnotation(methElt, UIEffect.class);
         AnnotationMirror targetSafeP =
@@ -230,7 +234,7 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
         }
 
         // TODO: Report an error for polymorphic method bodies??? Until we fix the receiver defaults, it won't really be correct
-        Effect.EffectRange range =
+        @SuppressWarnings("unused") Effect.EffectRange range =
             getypeFactory.findInheritedEffectRange(
                 (TypeElement) methElt.getEnclosingElement(), methElt,
                 true, node);
@@ -257,8 +261,12 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
         }
 
         Void ret = super.visitMethod(node, p);
-        currentMethods.pop();
+        if(debugSpew) {
+            System.err.println("Popping " + effStack.peek()
+                + " from the stack when checking " + methElt);
+        }
         effStack.pop();
+        currentMethods.pop();
         return ret;
     }
 
@@ -270,7 +278,7 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
     @Override public Void visitClass(ClassTree node, Void p) {
         // TODO: Check constraints on this class decl vs. parent class decl., and interfaces
         // TODO: This has to wait for now: maybe this will be easier with the isValidUse on the TypeFactory
-        AnnotatedTypeMirror.AnnotatedDeclaredType atype =
+        @SuppressWarnings("unused") AnnotatedTypeMirror.AnnotatedDeclaredType atype =
             atypeFactory.fromClass(node);
         //System.err.print("Visiting "+atype+" <: ");
         //for (AnnotatedTypeMirror.AnnotatedDeclaredType sup : atype.directSuperTypes()) {
@@ -308,5 +316,9 @@ public class GUIEffectsVisitor extends BaseTypeVisitor<GUIEffectsChecker> {
         currentMethods.pop();
         effStack.pop();
         return ret;
+    }
+
+    void out(String text, Object node) {
+        checker.out(text, node);
     }
 }

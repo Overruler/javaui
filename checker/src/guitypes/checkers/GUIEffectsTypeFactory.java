@@ -76,12 +76,11 @@ public class GUIEffectsTypeFactory
     // Could move this to a public method on the checker class
     public ExecutableElement findJavaOverride(ExecutableElement overrider,
             TypeMirror parentType) {
+        if(debugSpew) {
+            System.err.println("Searching overridden method for "
+                + overrider + " from " + parentType);
+        }
         if(parentType.getKind() != TypeKind.NONE) {
-            if(debugSpew) {
-                System.err
-                    .println("Searching for overridden methods from "
-                        + parentType);
-            }
             TypeElement overriderClass =
                 (TypeElement) overrider.getEnclosingElement();
             TypeElement elem =
@@ -92,7 +91,9 @@ public class GUIEffectsTypeFactory
             }
             try {
                 for(Element e : elem.getEnclosedElements()) {
-                    if(debugSpew) {
+                    if(debugSpew
+                        && "java.lang.Object".contentEquals(elem
+                            .getQualifiedName()) == false) {
                         System.err.println("Considering element " + e);
                     }
                     if(e.getKind() == ElementKind.METHOD
@@ -104,13 +105,22 @@ public class GUIEffectsTypeFactory
                                 .getElementUtils()
                                 .overrides(overrider, ex, overriderClass);
                         if(overrides) {
+                            if(debugSpew) {
+                                System.err
+                                    .println("Search overridden method: found "
+                                        + ex
+                                        + " for "
+                                        + overrider
+                                        + " from " + parentType);
+                            }
                             return ex;
                         }
                     }
                 }
                 if(debugSpew) {
-                    System.err.println("Done considering elements of "
-                        + parentType);
+                    System.err
+                        .println("Search overridden method: not found for "
+                            + overrider + " from " + parentType);
                 }
             } catch(Exception e) {
                 System.err.println("Caught exception :" + e);
@@ -142,6 +152,10 @@ public class GUIEffectsTypeFactory
             getDeclAnnotation(cls, SafeType.class);
 
         if(targetClassSafeTypeP != null) {
+            if(debugSpew) {
+                System.err.println("isUIType(" + cls
+                    + ") explicitly marked not a UI type");
+            }
             return false; // explicitly marked not a UI type
         }
 
@@ -149,6 +163,10 @@ public class GUIEffectsTypeFactory
             targetClassUIP != null || targetClassUITypeP != null;
 
         if(hasUITypeDirectly) {
+            if(debugSpew) {
+                System.err.println("isUIType(" + cls
+                    + ") has UI Type Directly");
+            }
             return true;
         }
 
@@ -161,12 +179,16 @@ public class GUIEffectsTypeFactory
             return false;
         }
 
-        // We don't check polymorphic annos so we can make a couple methods of an @UIType polymorphic explicitly
+        // We don't check polymorphic annotations so we can make a couple methods of an @UIType polymorphic explicitly
         //AnnotationMirror targetClassPolyP = getDeclAnnotation(cls, PolyUI.class);
         //AnnotationMirror targetClassPolyTypeP = getDeclAnnotation(cls, PolyUIType.class);
         AnnotationMirror targetClassSafeP =
             getDeclAnnotation(cls, AlwaysSafe.class);
         if(targetClassSafeP != null) {
+            if(debugSpew) {
+                System.err.println("isUIType(" + cls
+                    + ") explicitly annotated AlwaysSafe");
+            }
             return false; // explicitly annotated otherwise
         }
 
@@ -177,18 +199,21 @@ public class GUIEffectsTypeFactory
             packageP = packageP.getEnclosingElement();
         }
         if(packageP != null) {
-            if(debugSpew) {
-                System.err.println("Found package " + packageP);
-            }
             if(getDeclAnnotation(packageP, UIPackage.class) != null) {
                 if(debugSpew) {
-                    System.err.println("Package " + packageP
-                        + " is annotated @UIPackage");
+                    System.err.println("isUIType(" + cls + ") Package "
+                        + packageP + " is annotated @UIPackage");
                 }
                 return true;
                 //fromElement(classElt).addAnnotation(UIType.class);
                 //System.err.println("Annotating "+classElt+" as @UIType");
+            } else if(debugSpew) {
+                System.err.println("isUIType(" + cls + ") Package "
+                    + packageP + " found but not annotated @UIPackage");
             }
+        }
+        if(debugSpew) {
+            System.err.println("isUIType(" + cls + ") default no");
         }
 
         return false;
@@ -213,7 +238,9 @@ public class GUIEffectsTypeFactory
     */
     public Effect getDeclaredEffect(ExecutableElement methodElt) {
         if(debugSpew) {
-            System.err.println("begin mayHaveUIEffect(" + methodElt + ")");
+            String text = "getDeclaredEffect " + methodElt;
+            //System.err.println(text);
+            out(text, methodElt);
         }
         AnnotationMirror targetUIP =
             getDeclAnnotation(methodElt, UIEffect.class);
@@ -224,7 +251,7 @@ public class GUIEffectsTypeFactory
         TypeElement targetClassElt =
             (TypeElement) methodElt.getEnclosingElement();
         if(debugSpew) {
-            System.err.println("targetClassElt found");
+            System.err.println("targetClassElt found " + targetClassElt);
         }
 
         // Short-circuit if the method is explicitly annotated
@@ -246,6 +273,10 @@ public class GUIEffectsTypeFactory
         }
 
         if(isUIType(targetClassElt)) {
+            if(debugSpew) {
+                System.err
+                    .println("Method marked @UIEffect based on class");
+            }
             return new Effect(UIEffect.class);
         }
 
@@ -326,13 +357,13 @@ public class GUIEffectsTypeFactory
                 //getDeclAnnotation(declaringType, UIType.class) != null ||
                 //getDeclAnnotation(declaringType, UI.class) != null ||
                 //(getDeclAnnotation(ElementUtils.enclosingPackage(declaringType), UIPackage.class) != null
-                // && !TypesUtils.isAnonymousType(ElementUtils.getType(declaringType))))
+                // && !isAnonymousType(ElementUtils.getType(declaringType))))
                 && getDeclAnnotation(overridingMethod, SafeEffect.class) == null;
         boolean isPolyUI =
             getDeclAnnotation(overridingMethod, PolyUIEffect.class) != null;
         // TODO: We must account for @UI and @AlwaysSafe annotations for extends and implements clauses, and do the proper
         //       substitution of @Poly effects and quals!
-        List<? extends TypeMirror> interfaces =
+        @SuppressWarnings("unused") List<? extends TypeMirror> interfaces =
             declaringType.getInterfaces();
         TypeMirror superclass = declaringType.getSuperclass();
         while(superclass != null && superclass.getKind() != TypeKind.NONE) {
@@ -364,7 +395,7 @@ public class GUIEffectsTypeFactory
                     //if (isUI && issueConflictWarning) {
                     //    AnnotatedTypeMirror.AnnotatedDeclaredType supdecl = fromElement((TypeElement)(((DeclaredType)superclass).asElement()));//((DeclaredType)superclass).asElement());
                     //    // Need to special case an anonymous class with @UI on the decl, because "new @UI Runnable {...}" parses as @UI on an anon class decl extending Runnable
-                    //    boolean isAnonInstantiation = TypesUtils.isAnonymousType(ElementUtils.getType(declaringType)) && getDeclAnnotation(declaringType, UI.class) != null;
+                    //    boolean isAnonInstantiation = isAnonymousType(ElementUtils.getType(declaringType)) && getDeclAnnotation(declaringType, UI.class) != null;
                     //    if (!isAnonInstantiation && !hasAnnotationByName(supdecl, UI.class)) {
                     //        checker.report(Result.failure("conflicts.override", "non-UI instantiation of "+supdecl), errorNode);
                     //    }
@@ -458,9 +489,8 @@ public class GUIEffectsTypeFactory
         }
         if(min == null && max == null) {
             return null;
-        } else {
-            return new Effect.EffectRange(min, max);
         }
+        return new Effect.EffectRange(min, max);
     }
 
     private static boolean isAnonymousType(TypeMirror type) {
@@ -471,22 +501,20 @@ public class GUIEffectsTypeFactory
     }
 
     @Override protected TreeAnnotator
-            createTreeAnnotator(GUIEffectsChecker checker) {
-        return new GUIEffectsTreeAnnotator(checker, debugSpew);
+            createTreeAnnotator(GUIEffectsChecker checker2) {
+        return new GUIEffectsTreeAnnotator(checker2);
+    }
+
+    void out(String text, Object node) {
+        checker.out(text, node);
     }
 
     /**
      * A class for adding annotations based on tree
      */
     private class GUIEffectsTreeAnnotator extends TreeAnnotator {
-        // Convenience to I don't have to type cast everywhere
-        GUIEffectsChecker gecheck;
-        protected final boolean debugSpew;
-
-        GUIEffectsTreeAnnotator(BaseTypeChecker checker, boolean spew) {
+        GUIEffectsTreeAnnotator(BaseTypeChecker checker) {
             super(checker, GUIEffectsTypeFactory.this);
-            gecheck = (GUIEffectsChecker) checker;
-            debugSpew = spew;
         }
 
         public boolean hasExplicitUIEffect(ExecutableElement methElt) {
@@ -516,8 +544,12 @@ public class GUIEffectsTypeFactory
                 (TypeElement) methType.getElement().getEnclosingElement();
             // STEP 1: Get the method effect annotation
             if(!hasExplicitEffect(methType.getElement())) {
-                //System.err.println("No explicit effect annotation on "+node.getName());
-                //System.err.println("Annotating with "+e);
+                if(debugSpew) {
+                    System.err.println("No explicit effect annotation on "
+                        + node.getName());
+                    System.err.println("Could want to be annotating with "
+                        + e);
+                }
                 // TODO: This line does nothing!  AnnotatedTypeMirror.addAnnotation silently ignores non-qualifier annotations!
                 // We should be digging up the /declaration/ of the method, and annotating that
                 methType.addAnnotation(e.getAnnot());
@@ -526,16 +558,26 @@ public class GUIEffectsTypeFactory
             AnnotatedTypeMirror.AnnotatedDeclaredType receiverType =
                 methType.getReceiverType();
             if(receiverType.getAnnotations().isEmpty()) {
-                //System.err.println("Fixing annotations in "+node.getName());
-                //System.err.println(type.getKind()+":"+type);
+                if(debugSpew) {
+                    System.err.println("Fixing annotations in "
+                        + node.getName());
+                    System.err.println(type.getKind() + ":" + type);
+                }
                 AnnotatedTypeMirror receiver = receiverType;//methType.getReceiverType();
-                //System.err.println("Receiver type kind: "+receiver.getKind());
+                if(debugSpew) {
+                    System.err.println("Receiver type kind: "
+                        + receiver.getKind());
+                }
                 receiver.clearAnnotations();
                 receiver.addAnnotation(isPolymorphicType(cls)
                     ? PolyUI.class
                     : getDeclAnnotation(cls, UI.class) != null ? UI.class
                         : AlwaysSafe.class);
-                //System.err.println("Cleared and adding appropriate annot to receiver:"+type);
+                if(debugSpew) {
+                    System.err
+                        .println("Cleared and adding appropriate annot to receiver:"
+                            + type);
+                }
             }
             return super.visitMethod(node, type);
         }

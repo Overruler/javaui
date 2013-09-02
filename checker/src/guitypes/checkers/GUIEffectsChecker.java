@@ -41,7 +41,6 @@ import com.sun.source.tree.CompilationUnitTree;
 public class GUIEffectsChecker extends BaseTypeChecker {
     boolean debugSpew;
 
-
     // Even with a correct classpath, the framework doesn't seem to find the visitor class.
     @Override protected BaseTypeVisitor<?>
             createSourceVisitor(CompilationUnitTree root) {
