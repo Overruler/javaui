@@ -12,20 +12,23 @@ import checkers.util.test.ParameterizedCheckerTest;
 /**
  */
 @RunWith(CheckerParameterized.class)
-public class Tests1Driver extends ParameterizedCheckerTest {
+public class Tests2Driver extends ParameterizedCheckerTest {
 
-    public Tests1Driver(File testFile) {
+    public Tests2Driver(File testFile) {
         // TODO: This "guieffects" is supposed to the the "String checkerDir" in the parent class, and should probably be tests/ui or ui or something like that
         // Note that several superclasses up, it hardcodes "tests"+File.separator+checkerDir
-        super(testFile, guitypes.checkers.GUIEffectsChecker.class
-            .getName(), "ui" + File.separator + "tests",
-        //"-Xbootclasspath/a:tests/build/testclasses",
-        //"-Alint=debugSpew",
+        super(
+            testFile,
+            guitypes.checkers.GUIEffectsChecker.class.getName(),
+            "ui" + File.separator + "tests2",
+            "-Xbootclasspath/a:tests/build/testclasses",
+            //"-Alint=debugSpew",
             "-Anomsgtext");
+        //System.out.println("Kicking off UITestDriver");
     }
 
     @Parameters public static Collection<Object[]> data() {
         //System.out.println("Getting test data dirs");
-        return testFiles("ui" + File.separator + "tests");
+        return testFiles("ui" + File.separator + "tests2");
     }
 }
