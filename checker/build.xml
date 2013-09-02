@@ -181,5 +181,35 @@
     </junit>
   </target>
 
+  <target name="test-of-testing" depends="dist,build-tests">
+    <antcall target="-run-tests">
+      <param name="param" value="ui.testdrivers.ExtraTest" />
+    </antcall>
+  </target>
+  <target name="package-spanning-test" depends="dist,build-tests">
+    <antcall target="-run-tests">
+      <param name="param" value="ui.testdrivers.PackageSpanningTest" />
+    </antcall>
+  </target>
+  <target name="tests1" depends="dist,build-tests">
+    <antcall target="-run-tests">
+      <param name="param" value="ui.testdrivers.Tests1Driver" />
+    </antcall>
+  </target>
+  <target name="tests2" depends="dist,build-tests">
+    <antcall target="-run-tests">
+      <param name="param" value="ui.testdrivers.Tests2Driver" />
+    </antcall>
+  </target>
+  <target name="tests3" depends="dist,build-tests">
+    <antcall target="-run-tests">
+      <param name="param" value="ui.testdrivers.Tests3Driver" />
+    </antcall>
+  </target>
+  <target name="tests4" depends="dist,build-tests">
+    <antcall target="-run-tests">
+      <param name="param" value="ui.testdrivers.Tests4Driver" />
+    </antcall>
+  </target>
 
 </project>
