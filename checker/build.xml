@@ -13,6 +13,19 @@
   <property name="tests.junit" value="${tests}/junit-4.7.jar" />
   <property name="run.tests.should.fork" value="true" />
   <property name="halt.on.test.failure" value="false" />
+  <property name="checkers" location="checkers-new/checker-framework-1.6.7" />
+  <property name="javac.lib" location="${checkers}/binary/javac.jar" />
+  <property name="checkers.lib" location="${checkers}/binary/checkers.jar" />
+  <property name="jdkName"
+            value="jdk7.jar"
+            description="Filename of annotated JDK libary in checkers/binary, 
+    one of jdk6.jar, jdk7.jar, jdk8.jar" />
+  <property name="jdk.lib" location="${checkers}/binary/${jdkName}" />
+
+  <!-- On Mac/Linux, use the javac shell script; on Windows, use javac.bat -->
+  <condition property="cfJavac" value="javac.bat" else="javac">
+    <os family="windows" />
+  </condition>
 
   <presetdef name="jsr308.javac">
     <javac fork="yes" debug="true" debuglevel="lines,vars,source">
@@ -25,6 +38,21 @@
       </classpath>
     </javac>
   </presetdef>
+
+  <target name="setup-Checker-Framework"
+          description="Download Checker Framework source code to fix classpath">
+    <mkdir dir="checkers-new"/>
+    <get usetimestamp="true"
+         dest="checkers-new/checkers.zip"
+         src="http://types.cs.washington.edu/checker-framework/current/checkers.zip" />
+    <unzip dest="checkers-new" src="checkers-new/checkers.zip" />
+    <!-- Workaround to issue 249 to not need CHECKERS environment variable. -->
+    <replace dir="checkers-new" token="%CHECKERS%\binary" value="%~dp0">
+      <include name="**/javac.bat"/>
+    </replace>
+    <echo>Latest version unzipped to checkers-new, please verify that </echo>
+    <echo>property $${checkers} has correct version: ${checkers}</echo>
+  </target>
 
   <target name="init">
     <!-- Create the time stamp -->
