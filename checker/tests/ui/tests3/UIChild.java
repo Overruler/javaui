@@ -1,15 +1,15 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
 // Should not inherit @UI!
 public class UIChild extends UIParent {
-    @Override @UIEffect public void doingUIStuff() {
+    @Override/*@UIEffect*/public void doingUIStuff() {
         // Overriding UI with UI
         thingy.dangerous();
-    } 
-    
+    }
+
     // Should be an error to make this @UI
     //:: error: (conflicts.override)
-    @Override @UIEffect public void doingSafeStuff() {} 
+    @Override/*@UIEffect*/public void doingSafeStuff() {}
 
     public void shouldNotBeUI() {
         //:: error: (call.invalid.ui)
@@ -17,12 +17,11 @@ public class UIChild extends UIParent {
     }
 
     //:: error: (conflicts.annotations)
-    @UIEffect @SafeEffect public void doubleAnnot1() {
-    }
+    /*@UIEffect*//*@SafeEffect*/public void doubleAnnot1() {}
+
     //:: error: (conflicts.annotations)
-    @UIEffect @PolyUIEffect public void doubleAnnot2() {
-    }
+    /*@UIEffect*//*@PolyUIEffect*/public void doubleAnnot2() {}
+
     //:: error: (conflicts.annotations)
-    @PolyUIEffect @SafeEffect public void doubleAnnot3() {
-    }
+    /*@PolyUIEffect*//*@SafeEffect*/public void doubleAnnot3() {}
 }

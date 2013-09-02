@@ -1,7 +1,7 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
-@PolyUIType
-@PolyUI
+/*@PolyUIType*/
+/*@PolyUI*/
 public interface IGenericTask {
-    @PolyUIEffect public void doGenericStuff();
+    /*@PolyUIEffect*/public void doGenericStuff();
 }

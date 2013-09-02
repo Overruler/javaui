@@ -1,11 +1,11 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
-@PolyUI
-public class GenericSubTask implements @PolyUI IGenericTask {
+/*@PolyUI*/
+public class GenericSubTask implements /*@PolyUI*/IGenericTask {
     public GenericTaskUIConsumer uicons;
     public GenericTaskSafeConsumer safecons;
 
-    @PolyUIEffect public void doGenericStuff() {
+    /*@PolyUIEffect*/@Override public void doGenericStuff() {
         // In here, it should be that this:@PolyUI
         uicons.runAsync(this); // should be okay
         //:: error: (argument.type.incompatible)

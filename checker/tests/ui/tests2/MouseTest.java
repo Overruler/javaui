@@ -1,10 +1,13 @@
-import java.awt.event.*;
-import guitypes.checkers.quals.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-// Test the stub file handling
-@UIType
+/*>>> import guitypes.checkers.quals.*;*/
+
+/*@UIType*/
 class MouseTest extends MouseAdapter {
-    public void mouseEntered(MouseEvent arg0) {
+    // Test the stub file handling
+    @SuppressWarnings("null") @Override public void
+            mouseEntered(MouseEvent arg0) {
         IAsyncUITask t = null;
         t.doStuff();
     }

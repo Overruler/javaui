@@ -1,8 +1,8 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
-@UIType
+/*@UIType*/
 public class BadUIOverrideChild extends SafeParent {
     // Should be an error b/c we marked this @UIType
     //:: error: (conflicts.override)
-    void m() {}
+    @Override void m() {}
 }

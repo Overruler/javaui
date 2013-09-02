@@ -1,5 +1,5 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
 public interface IFooUI {
-    @UIEffect public void foo();
+    /*@UIEffect*/public void foo();
 }

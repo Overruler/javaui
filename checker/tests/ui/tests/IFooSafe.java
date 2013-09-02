@@ -1,5 +1,5 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
 public interface IFooSafe {
-    @SafeEffect public void foo();
+    /*@SafeEffect*/public void foo();
 }

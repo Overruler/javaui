@@ -1,6 +1,6 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
-@UIType
+/*@UIType*/
 public interface IAsyncUITask {
     public void doStuff();
 }

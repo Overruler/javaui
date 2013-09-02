@@ -1,7 +1,6 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*;*/
 
-public class FooConflict
-    implements IFooSafe, IFooUI {
-        //:: warning: (conflicts.inheritance)
-        public void foo() { }
+public class FooConflict implements IFooSafe, IFooUI {
+    //:: warning: (conflicts.inheritance)
+    @Override public void foo() {}
 }

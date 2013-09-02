@@ -1,45 +1,66 @@
-import guitypes.checkers.quals.*;
+/*>>> import guitypes.checkers.quals.*; */
+
+@SuppressWarnings({
+    "static-method", "unused"
+})
 public class AnonInnerDefaults {
+
+    /*@UIType*/
+    public interface IAsyncUITask {
+        public void doStuff();
+    }
+
+    /*@UIType*/
+    public interface UIElement {
+        public void dangerous();
+
+        /*@SafeEffect*/public void repaint();
+
+        /*@SafeEffect*/public void runOnUIThread(IAsyncUITask task);
+    }
 
     public static interface SafeIface {
         public void doStuff();
     }
+
     public static interface ExplicitUIIface {
-        @UIEffect public void doStuff();
-    }
-    @UIType public static interface UITypeIface {
-        public void doStuff();
-    }
-    @PolyUIType public static interface PolyIface {
-        @PolyUIEffect public void doStuff();
+        /*@UIEffect*/public void doStuff();
     }
 
-    @UIEffect public void tryStuff(final UIElement e) {
+    /*@UIType*/public static interface UITypeIface {
+        public void doStuff();
+    }
+
+    /*@PolyUIType*/public static interface PolyIface {
+        /*@PolyUIEffect*/public void doStuff();
+    }
+
+    /*@UIEffect*/public void tryStuff(final UIElement e) {
         SafeIface s = new SafeIface() {
-            public void doStuff() {
+            @Override public void doStuff() {
                 //:: error: (call.invalid.ui)
                 e.dangerous();
             }
         };
         ExplicitUIIface ex = new ExplicitUIIface() {
-            public void doStuff() {
+            @Override public void doStuff() {
                 e.dangerous(); // should be okay
             }
         };
         UITypeIface u = new UITypeIface() {
-            public void doStuff() {
+            @Override public void doStuff() {
                 e.dangerous(); // should be okay
             }
         };
-        @UI PolyIface p = new @UI PolyIface() {
-            public void doStuff() {
+        /*@UI*/PolyIface p = new /*@UI*/PolyIface() {
+            @Override public void doStuff() {
                 e.dangerous(); // should be okay
             }
         };
         PolyIface p2 = new PolyIface() {
-            public void doStuff() {
+            @Override public void doStuff() {
                 //:: error: (call.invalid.ui)
-                e.dangerous(); // should be okay
+                e.dangerous();
             }
         };
     }
