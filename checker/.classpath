@@ -3,13 +3,12 @@
 	<classpathentry kind="src" path="jdk8-src"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/checkers"/>
-	<classpathentry kind="lib" path="/checkers/binary/checkers.jar" sourcepath="/checkers/src">
+	<classpathentry kind="lib" path="checkers-new/checker-framework-1.6.7/binary/checkers.jar" sourcepath="checkers-new/checker-framework-1.6.7/src">
 		<attributes>
 			<attribute name="javadoc_location" value="http://types.cs.washington.edu/checker-framework/current/doc/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/checkers/binary/javac.jar"/>
+	<classpathentry kind="lib" path="checkers-new/checker-framework-1.6.7/binary/javac.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
