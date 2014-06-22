@@ -1,5 +1,8 @@
 A Fork of GUI Effects Checker
 ===========================
+Note: This fork is no longer maintained, but fear not. 
+An up-to-date version is now included in the [Checker Framework itself](http://types.cs.washington.edu/checker-framework/current/checker-framework-manual.html#guieffect-checker).
+
 This fork fixes the compile-time errors in GUI Effects Checker when building 
 against Checker Framework 1.6.7. It also includes changes to build script and 
 test support classes needed to get all tests to succeed.
